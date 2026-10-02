@@ -1,0 +1,10 @@
+# Static publish + serverless function. No Vite/npm build required for CLI deploy.
+[build]
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[functions.analyze]
+  timeout = 26
