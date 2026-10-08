@@ -1,0 +1,100 @@
+import { defineConfig } from "vite";
+
+const ANALYZE_PATHS = new Set(["/api/analyze", "/.netlify/functions/analyze"]);
+
+/**
+ * Local stand-in for netlify/functions/analyze.mjs.
+ * Production calls Claude through the Netlify function; this never runs during `vite build`.
+ * The delay keeps the Priority Plays loader on screen long enough for one tagline rotation.
+ */
+function localAnalyzeStub() {
+  const stubDelayMs = 4200;
+
+  function handle(req, res, next) {
+    const path = (req.url || "").split("?")[0];
+    if (!ANALYZE_PATHS.has(path)) {
+      next();
+      return;
+    }
+
+    if (req.method === "OPTIONS") {
+      res.statusCode = 204;
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept");
+      res.end();
+      return;
+    }
+
+    if (req.method !== "POST") {
+      res.statusCode = 405;
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.end(JSON.stringify({ error: "POST a comparison to analyze." }));
+      return;
+    }
+
+    let raw = "";
+    req.on("data", (chunk) => {
+      raw += chunk;
+    });
+    req.on("end", () => {
+      let companyName = "This company";
+      try {
+        const body = JSON.parse(raw || "{}");
+        if (body?.company?.name) companyName = String(body.company.name);
+      } catch {
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.end(JSON.stringify({ error: "Send JSON." }));
+        return;
+      }
+
+      const payload = {
+        bottomLine: `${companyName} is on screen against the selected peers for February 2026. This local stub stands in for the Netlify function so Priority Plays can be reviewed without an API key.`,
+        actions: [
+          {
+            label: "Rebalance paid",
+            detail: `Compare ${companyName}'s paid and owned visit mix with the peers in the table before shifting spend.`,
+          },
+          {
+            label: "Lift conversion",
+            detail:
+              "Use the Conv % row to see whether the selected company trails the compare-to set, then fix the weakest step in the path.",
+          },
+          {
+            label: "Keep visitors",
+            detail:
+              "Check bounce and return-visitor rates against peers and tighten the landing experience where the gap is widest.",
+          },
+          {
+            label: "Focus the inbox",
+            detail:
+              "Read email power, spam, and sends per user against the peer set and cut the campaigns that do not earn traffic.",
+          },
+        ],
+      };
+
+      setTimeout(() => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.setHeader("Cache-Control", "no-store");
+        res.end(JSON.stringify(payload));
+      }, stubDelayMs);
+    });
+  }
+
+  return {
+    name: "local-analyze-stub",
+    configureServer(server) {
+      server.middlewares.use(handle);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(handle);
+    },
+  };
+}
+
+export default defineConfig({
+  base: "./",
+  plugins: [localAnalyzeStub()],
+});
