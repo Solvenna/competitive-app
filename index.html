@@ -60,31 +60,53 @@
         This sample needs JavaScript to load the comparison.
       </p>
     </noscript>
+    <!-- Static copy so Netlify Forms can detect benchmark-lead at build time. The dialog posts the same fields. -->
+    <form
+      name="benchmark-lead"
+      method="POST"
+      action="/"
+      data-netlify="true"
+      data-netlify-honeypot="bot-field"
+      netlify-honeypot="bot-field"
+      hidden
+    >
+      <input type="hidden" name="form-name" value="benchmark-lead" />
+      <input type="text" name="contact" />
+      <input type="text" name="contact-kind" />
+      <input type="text" name="selected-company" />
+      <input type="text" name="compare-to" />
+      <input type="text" name="page-url" />
+      <input type="text" name="bot-field" />
+    </form>
     <dialog id="month-gate" class="gate" aria-labelledby="month-gate-title">
-      <form id="month-gate-form" novalidate>
+      <form id="month-gate-form" name="benchmark-lead" method="POST" action="/" novalidate>
+        <input type="hidden" name="form-name" value="benchmark-lead" />
+        <input type="hidden" name="contact-kind" value="" />
+        <input type="hidden" name="selected-company" value="" />
+        <input type="hidden" name="compare-to" value="" />
+        <input type="hidden" name="page-url" value="" />
+        <p class="gate-honeypot" aria-hidden="true">
+          <label>Don’t fill this out if you’re human: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+        </p>
         <h2 id="month-gate-title">See the full year against your peers</h2>
         <p id="month-gate-copy">
           This demo stays on February 2026. Solvenna keeps the rest of the monthly history for this benchmark and turns it into a clear plan: where you trail peers, which channels are not earning their spend, and where to invest next so you can win share.
         </p>
         <div class="gate-fields">
-          <label>
-            Name <span class="gate-optional">optional</span>
-            <input id="gate-name" name="name" type="text" autocomplete="name" />
-          </label>
-          <label>
-            Company <span class="gate-optional">optional</span>
-            <input id="gate-company" name="company" type="text" autocomplete="organization" />
-          </label>
-          <label for="gate-email">
-            Email
-            <input id="gate-email" name="email" type="email" autocomplete="email" inputmode="email" aria-describedby="month-gate-hint month-gate-error" />
-          </label>
-          <label for="gate-phone">
-            Phone
-            <input id="gate-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" aria-describedby="month-gate-hint month-gate-error" />
+          <label for="gate-contact">
+            Email or phone
+            <input
+              id="gate-contact"
+              name="contact"
+              type="text"
+              autocomplete="on"
+              spellcheck="false"
+              aria-required="true"
+              aria-describedby="month-gate-hint month-gate-error"
+            />
           </label>
         </div>
-        <p class="gate-hint" id="month-gate-hint">Email or phone is enough. Name and company help us prepare the right comparison.</p>
+        <p class="gate-hint" id="month-gate-hint">An email address or a phone number is enough.</p>
         <p class="gate-error" id="month-gate-error" role="alert" hidden></p>
         <div class="gate-actions">
           <button type="submit" class="gate-primary">Get the full monthly analysis</button>
@@ -92,9 +114,9 @@
         </div>
       </form>
       <div id="month-gate-success" class="gate-success" hidden>
-        <h2 id="month-gate-success-title">Your note is ready to send</h2>
+        <h2 id="month-gate-success-title">Thanks, we have your note</h2>
         <p>
-          An email to info@solvenna.com is open with your details. Send it, and Solvenna will follow up with the full monthly history and a short read on what to fix first.
+          Solvenna will follow up with the full monthly history and a short read on what to fix first.
         </p>
         <p>
           <a class="gate-contact" href="https://solvenna.com/contact/" target="_blank" rel="noopener noreferrer">Continue on the contact page</a>

@@ -94,7 +94,52 @@ function localAnalyzeStub() {
   };
 }
 
+const LEAD_FORM_NAME = "benchmark-lead";
+
+/** Local stand-in for Netlify Forms. Production stores the post and emails the site owner. */
+function localLeadFormStub() {
+  function handle(req, res, next) {
+    const path = (req.url || "").split("?")[0];
+    if (req.method !== "POST" || (path !== "/" && path !== "/index.html")) {
+      next();
+      return;
+    }
+    const contentType = String(req.headers["content-type"] || "");
+    if (!contentType.includes("application/x-www-form-urlencoded")) {
+      next();
+      return;
+    }
+
+    let raw = "";
+    req.on("data", (chunk) => {
+      raw += chunk;
+    });
+    req.on("end", () => {
+      const params = new URLSearchParams(raw);
+      if (params.get("form-name") !== LEAD_FORM_NAME) {
+        res.statusCode = 404;
+        res.end("Not found");
+        return;
+      }
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.setHeader("Cache-Control", "no-store");
+      res.end("ok");
+    });
+  }
+
+  return {
+    name: "local-lead-form-stub",
+    configureServer(server) {
+      server.middlewares.use(handle);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(handle);
+    },
+  };
+}
+
 export default defineConfig({
   base: "./",
-  plugins: [localAnalyzeStub()],
+  plugins: [localAnalyzeStub(), localLeadFormStub()],
 });
