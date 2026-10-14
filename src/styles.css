@@ -679,9 +679,20 @@ h3 {
   font-size: 0.95rem;
 }
 .gate-fields {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 0.45rem 0.65rem;
   display: grid;
+}
+.gate p.gate-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 .gate-fields label {
   color: var(--navy);
@@ -725,11 +736,6 @@ h3 {
   color: var(--blue-deep);
   font-weight: 700;
 }
-@media (width<=560px) {
-  .gate-fields {
-    grid-template-columns: 1fr;
-  }
-}
 .gate-actions {
   flex-wrap: wrap;
   align-items: center;
@@ -753,6 +759,10 @@ h3 {
   background: var(--orange);
   color: #010c16;
   border: 2px solid #c45e22;
+}
+.gate-primary:disabled {
+  cursor: wait;
+  opacity: 0.72;
 }
 .gate-mail {
   color: var(--blue-deep);

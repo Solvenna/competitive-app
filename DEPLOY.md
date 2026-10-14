@@ -34,6 +34,22 @@ After the link is saved, the next merge to `main` builds and publishes. Opening 
 - On the preview or production URL, pick a company, add and remove a competitor, and confirm Priority Plays returns a bottom line and four actions.
 - A missing `ANTHROPIC_API_KEY` returns a 503 from the function. The page then shows the canned sample read.
 
+## Lead form email notifications
+
+The “Why only one month?” dialog submits one email-or-phone field to Netlify Forms. The form name is `benchmark-lead`. Netlify finds it from the hidden form in `index.html` when the site builds. Each submission also includes the company on screen, the Compare To list, the page URL, and whether the contact value is an email or a phone number.
+
+After the site is linked to this repo and a deploy of this form has finished:
+
+1. Open the site in Netlify → **Forms**. Confirm **benchmark-lead** is listed.
+2. If it is missing, open **Project configuration** → **Forms**, turn **Form detection** on, then **Deploys** → **Trigger deploy** → **Deploy project**.
+3. Open **Forms** → **benchmark-lead** → **Form notifications** → **Add notification** → **Email notification**.
+4. Select `benchmark-lead`, enter the address that should receive each lead, and save.
+5. New submissions are listed under **Forms** → **benchmark-lead** → **Submissions**.
+
+On current credit-based plans, including the $0 Free plan, form submissions are unlimited and do not spend credits. On a legacy Free plan the cap is 100 submissions per site per month; Netlify emails the team as usage nears that cap, and further submissions wait until the next month or an upgrade. Check **Team overview** → **Billing** to see which plan this team is on. The honeypot field `bot-field` is there so Netlify can drop spam that fills it.
+
+`npm run dev` and `npm run preview` answer the form post locally so the thank-you state can be reviewed. They do not create a Netlify submission or send email.
+
 ## Local function check
 
 ```bash
