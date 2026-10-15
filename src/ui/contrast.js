@@ -19,7 +19,7 @@ export function applyContrast(enabled) {
     if (state) state.textContent = enabled ? "On" : "Off";
   }
   const theme = document.querySelector('meta[name="theme-color"]');
-  if (theme) theme.setAttribute("content", enabled ? "#010c16" : "#05283f");
+  if (theme) theme.setAttribute("content", enabled ? "#010c16" : "#22395e");
 }
 
 export function initContrast() {
