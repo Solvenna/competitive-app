@@ -1,6 +1,12 @@
-# Static publish + serverless function. No Vite/npm build required for CLI deploy.
+# Git-connected build. Netlify installs dependencies and publishes the Vite output.
+# The Claude proxy stays in netlify/functions and is routed at /api/analyze
+# by the path export in analyze.mjs. ANTHROPIC_API_KEY is a site env var.
 [build]
+  command = "npm ci && npm run build"
   publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
 
 [functions]
   directory = "netlify/functions"

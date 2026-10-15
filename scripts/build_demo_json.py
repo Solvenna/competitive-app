@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild quicklift-public-demo/data/demo.json for Solvenna public marketing demo.
+"""Rebuild public/data/demo.json for the Solvenna public marketing demo.
 
 - All companies from vw_company that have a primary domain (~2247)
 - February 2026 series fully filled (imputed where needed)
@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import re
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -21,11 +22,12 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-DB_PATH = "/home/box/quicklift-readonly.duckdb"
-OUT_PATH = Path("/workspace/quicklift-public-demo/data/demo.json")
-NOTES_PATH = Path("/workspace/quicklift-public-demo/data/IMPUTATION_NOTES.md")
-METRIC_MAP_PATH = Path("/workspace/quicklift-public-demo/METRIC_MAP.md")
-SLIM_PATH = Path("/workspace/quicklift-public-demo/data/demo-feb.json")
+ROOT = Path(__file__).resolve().parents[1]
+DB_PATH = os.environ.get("QUICKLIFT_DUCKDB", "/home/box/quicklift-readonly.duckdb")
+OUT_PATH = Path(os.environ.get("DEMO_JSON_OUT", ROOT / "public" / "data" / "demo.json"))
+NOTES_PATH = Path(os.environ.get("IMPUTATION_NOTES_OUT", ROOT / "public" / "data" / "IMPUTATION_NOTES.md"))
+METRIC_MAP_PATH = Path(os.environ.get("METRIC_MAP_PATH", ROOT / "METRIC_MAP.md"))
+SLIM_PATH = Path(os.environ.get("DEMO_FEB_JSON_OUT", ROOT / "public" / "data" / "demo-feb.json"))
 
 SEED_DOMAINS = {
     "bestbuy.com",
@@ -1053,8 +1055,26 @@ are **not** in the public export, so this is an approximation labeled
 ## Percents
 JSON stores percents as **0–1 fractions** (matches prior demo.json).
 """
+    NOTES_PATH.parent.mkdir(parents=True, exist_ok=True)
     NOTES_PATH.write_text(notes, encoding="utf-8")
     print(f"Wrote {NOTES_PATH}")
+
+    # METRIC_MAP.md lives with the private data repo, not this public app.
+    if not METRIC_MAP_PATH.is_file():
+        print(f"Skipping METRIC_MAP update; {METRIC_MAP_PATH} not found")
+        print("\n=== SUMMARY ===")
+        print(f"companies: {len(companies_out)}")
+        print(f"series: {len(series_out)}")
+        print(f"feb_series: {len(feb_series)}")
+        print(f"file_size_bytes: {size}")
+        print(f"imputation_rate: {imp_rate:.4f}")
+        print(f"imputed_cells: {imputed_cells}")
+        print(f"total_feb_cells: {total_cells}")
+        print(f"skipped: {skipped}")
+        print(f"competitors_with_5: {sum(1 for v in competitors_out.values() if len(v)>=5)}")
+        print(f"competitors_empty: {sum(1 for v in competitors_out.values() if len(v)==0)}")
+        print(f"seed_count: {sum(1 for c in companies_out if c.get('seed'))}")
+        return
 
     # Update METRIC_MAP.md briefly
     mm = METRIC_MAP_PATH.read_text(encoding="utf-8")
