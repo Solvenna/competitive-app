@@ -77,4 +77,4 @@ Merging to `main` is what publishes. See `DEPLOY.md`.
 - `netlify.toml` — build command, publish directory, functions directory, Node 22.
 - `scripts/build_demo_json.py` — rebuilds the snapshot from DuckDB.
 
-The demo month is locked to February 2026. Other months open the lead form, which starts a `mailto:` to info@solvenna.com.
+The demo month is locked to February 2026. Other months open a lead form with one email-or-phone field. It posts to Netlify Forms (`benchmark-lead`). `npm run dev` and `npm run preview` accept that post locally so the thank-you state can be reviewed; they do not send mail.
