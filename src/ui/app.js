@@ -11,7 +11,6 @@ import {
   tableRows,
 } from "../lib/metrics.js";
 import { searchCompanies } from "../lib/search.js";
-import { setComparisonReader } from "./comparison-context.js";
 import { openMonthGate } from "./month-gate.js";
 import { createPriorityPlays } from "./priority-plays.js";
 
@@ -741,13 +740,6 @@ export function startApp(root) {
       <p>${escapeHtml(message)} Use <code>npm run dev</code> or <code>npm run preview</code> so <code>data/demo.json</code> can be fetched. Opening the HTML file directly will not load it.</p>
     </section>`;
   }
-
-  setComparisonReader(() => ({
-    company: state.companyId ? `${companyName(state.companyId)} (${state.companyId})` : "",
-    competitors: activeCompareIds()
-      .map((id) => companyName(id))
-      .join(", "),
-  }));
 
   loadCatalog()
     .then((store) => {
