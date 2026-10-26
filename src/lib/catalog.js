@@ -7,7 +7,9 @@ export function defaultMonth(months) {
 }
 
 export function demoJsonUrl() {
-  return new URL("./data/demo.json", window.location.href).href;
+  // Pages below the site root (such as /demo/) set data-root so the shared data file still resolves.
+  const root = new URL(document.documentElement.dataset.root || "./", window.location.href);
+  return new URL("data/demo.json", root).href;
 }
 
 export function suggestedCompetitorIds(model, companyId) {

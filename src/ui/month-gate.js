@@ -1,7 +1,47 @@
 import { classifyContact, contactErrorMessage } from "../lib/contact.js";
 import { readComparisonContext } from "./comparison-context.js";
+import { isReportUnlocked, onReportUnlock, unlockReport } from "./report-lock.js";
 
-const SUBMIT_LABEL = "Get the full monthly analysis";
+const VARIANTS = {
+  month: {
+    title: "See the full year against your peers",
+    copy: "This demo stays on February 2026. Solvenna keeps the rest of the monthly history for this benchmark and turns it into a clear plan: where you trail peers, which channels are not earning their spend, and where to invest next so you can win share.",
+    submit: "Get the full monthly analysis",
+    successTitle: "Thanks, we have your note",
+    successCopy: "Solvenna will follow up with the full monthly history and a short read on what to fix first.",
+  },
+  report: {
+    title: "Unlock the full benchmark report",
+    copy: "See every metric against your competitors, the at-a-glance charts, and all of your Priority Plays. Leave an email or phone number and the full report opens right away.",
+    submit: "Unlock the full report",
+    successTitle: "Your full report is unlocked",
+    successCopy: "Close this to read the rest of the benchmark. Solvenna will also follow up with the monthly history and a short read on what to fix first.",
+  },
+  header: {
+    title: "Get your full competitive benchmark",
+    copy: "Unlock every metric against your competitors, the at-a-glance charts, and all of your Priority Plays. Leave an email or phone number and the full report opens right away.",
+    submit: "Get the full report",
+    successTitle: "Your full report is unlocked",
+    successCopy: "Close this to read the rest of the benchmark. Solvenna will also follow up with the monthly history and a short read on what to fix first.",
+  },
+};
+
+let variant = VARIANTS.month;
+
+function applyVariant(name) {
+  variant = VARIANTS[name] || VARIANTS.month;
+  const set = (selector, text) => {
+    const node = document.querySelector(selector);
+    if (node) node.textContent = text;
+  };
+  set("#month-gate-title", variant.title);
+  set("#month-gate-copy", variant.copy);
+  set("#month-gate-form button[type=\"submit\"]", variant.submit);
+  set("#month-gate-success-title", variant.successTitle);
+  set("#month-gate-success-copy", variant.successCopy);
+  const source = document.querySelector("#month-gate-form")?.elements.source;
+  if (source) source.value = name in VARIANTS ? name : "month";
+}
 
 function formElements() {
   return {
@@ -26,7 +66,7 @@ function resetGate() {
   const button = form?.querySelector('button[type="submit"]');
   if (button) {
     button.disabled = false;
-    button.textContent = SUBMIT_LABEL;
+    button.textContent = variant.submit;
   }
   dialog?.setAttribute("aria-labelledby", "month-gate-title");
 }
@@ -95,19 +135,30 @@ async function submitGate(event) {
     });
     if (!response.ok) throw new Error(String(response.status));
     showSuccess();
+    unlockReport();
   } catch {
     showError("We couldn’t send that just now. Try again in a moment.", form.contact);
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = SUBMIT_LABEL;
+      button.textContent = variant.submit;
     }
   }
 }
 
-export function openMonthGate() {
+function openGate(name) {
   const dialog = document.querySelector("#month-gate");
-  if (dialog && !dialog.open) dialog.showModal();
+  if (!dialog || dialog.open) return;
+  applyVariant(name);
+  dialog.showModal();
+}
+
+export function openMonthGate() {
+  openGate("month");
+}
+
+export function openReportGate() {
+  openGate("report");
 }
 
 export function initMonthGate() {
@@ -119,4 +170,13 @@ export function initMonthGate() {
   dialog.addEventListener("close", resetGate);
   document.querySelector("#month-gate-close")?.addEventListener("click", () => dialog.close());
   document.querySelector("#month-gate-success-close")?.addEventListener("click", () => dialog.close());
+
+  const headerCta = document.querySelector("#header-cta");
+  if (headerCta) {
+    headerCta.hidden = isReportUnlocked();
+    headerCta.addEventListener("click", () => openGate("header"));
+    onReportUnlock(() => {
+      headerCta.hidden = true;
+    });
+  }
 }

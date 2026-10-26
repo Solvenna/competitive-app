@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { defineConfig } from "vite";
 
 const ANALYZE_PATHS = new Set(["/api/analyze", "/.netlify/functions/analyze"]);
@@ -94,7 +95,8 @@ function localAnalyzeStub() {
   };
 }
 
-const LEAD_FORM_NAME = "benchmark-lead";
+/** The main page and /demo post to separate Netlify forms. */
+const LEAD_FORM_NAMES = new Set(["benchmark-lead", "benchmark-demo-lead"]);
 
 /** Local stand-in for Netlify Forms. Production stores the post and emails the site owner. */
 function localLeadFormStub() {
@@ -116,7 +118,7 @@ function localLeadFormStub() {
     });
     req.on("end", () => {
       const params = new URLSearchParams(raw);
-      if (params.get("form-name") !== LEAD_FORM_NAME) {
+      if (!LEAD_FORM_NAMES.has(params.get("form-name"))) {
         res.statusCode = 404;
         res.end("Not found");
         return;
@@ -139,7 +141,42 @@ function localLeadFormStub() {
   };
 }
 
+/**
+ * Sends /demo to /demo/ so the demo page loads instead of the main-page fallback.
+ * Netlify serves demo/index.html at /demo on its own.
+ */
+function demoTrailingSlash() {
+  function handle(req, res, next) {
+    const [path, query] = (req.url || "").split("?");
+    if (path !== "/demo") {
+      next();
+      return;
+    }
+    res.statusCode = 301;
+    res.setHeader("Location", `/demo/${query ? `?${query}` : ""}`);
+    res.end();
+  }
+
+  return {
+    name: "demo-trailing-slash",
+    configureServer(server) {
+      server.middlewares.use(handle);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(handle);
+    },
+  };
+}
+
 export default defineConfig({
   base: "./",
-  plugins: [localAnalyzeStub(), localLeadFormStub()],
+  plugins: [demoTrailingSlash(), localAnalyzeStub(), localLeadFormStub()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(import.meta.dirname, "index.html"),
+        demo: resolve(import.meta.dirname, "demo/index.html"),
+      },
+    },
+  },
 });

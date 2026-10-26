@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en" data-page="demo" data-root="../">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Solvenna marketing benchmark: compare a retailer with competitors on February 2026 metrics."
+    />
+    <meta name="theme-color" content="#05283f" />
+    <link rel="icon" type="image/png" href="../solvenna-logo.png" />
+    <title>Solvenna Marketing Benchmark</title>
+    <script>
+      (function () {
+        var on = false;
+        try {
+          var stored = localStorage.getItem("quicklift-high-contrast");
+          if (stored === "on") on = true;
+          else if (stored === "off") on = false;
+          else on = window.matchMedia("(prefers-contrast: more)").matches;
+        } catch (e) {
+          on = false;
+        }
+        document.documentElement.setAttribute("data-contrast", on ? "high" : "standard");
+      })();
+    </script>
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="site-header">
+        <div class="header-top">
+          <img class="logo" src="../solvenna-logo.png" alt="Solvenna" width="220" height="48" />
+          <button type="button" id="contrast-toggle" class="contrast-toggle" aria-pressed="false">
+            <span class="contrast-label">High contrast</span>
+            <span class="contrast-state">Off</span>
+          </button>
+        </div>
+        <script>
+          (function () {
+            var on = document.documentElement.getAttribute("data-contrast") === "high";
+            var button = document.getElementById("contrast-toggle");
+            button.setAttribute("aria-pressed", on ? "true" : "false");
+            button.querySelector(".contrast-state").textContent = on ? "On" : "Off";
+          })();
+        </script>
+        <div class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Competitive marketing benchmark</p>
+            <h1>See exactly where your competitors are beating you</h1>
+            <p class="lede">
+              Compare traffic, search, social, and paid performance side by side,
+              then get Priority Plays that show where to invest next. Pick your
+              company and competitors below to start.
+            </p>
+            <ul class="hero-points">
+              <li>Side-by-side competitor metrics</li>
+              <li>Channel spend efficiency</li>
+              <li>Prioritized next steps</li>
+            </ul>
+          </div>
+          <div class="hero-actions">
+            <button type="button" id="header-cta" class="gate-primary hero-cta">Get the full report</button>
+            <a class="hero-secondary" href="#setup">Try the free sample ↓</a>
+            <p class="hero-note">Sample data from February 2026</p>
+          </div>
+        </div>
+      </header>
+
+      <main id="app" class="app">
+        <p class="status" role="status">Loading sample metrics…</p>
+      </main>
+    </div>
+    <noscript>
+      <p class="noscript">
+        This sample needs JavaScript to load the comparison.
+      </p>
+    </noscript>
+    <!-- Static copy so Netlify Forms can detect benchmark-demo-lead at build time. The dialog posts the same fields. -->
+    <form
+      name="benchmark-demo-lead"
+      method="POST"
+      action="/"
+      data-netlify="true"
+      data-netlify-honeypot="bot-field"
+      netlify-honeypot="bot-field"
+      hidden
+    >
+      <input type="hidden" name="form-name" value="benchmark-demo-lead" />
+      <input type="text" name="contact" />
+      <input type="text" name="contact-kind" />
+      <input type="text" name="selected-company" />
+      <input type="text" name="compare-to" />
+      <input type="text" name="page-url" />
+      <input type="text" name="source" />
+      <input type="text" name="bot-field" />
+    </form>
+    <dialog id="month-gate" class="gate" aria-labelledby="month-gate-title">
+      <form id="month-gate-form" name="benchmark-demo-lead" method="POST" action="/" novalidate>
+        <input type="hidden" name="form-name" value="benchmark-demo-lead" />
+        <input type="hidden" name="contact-kind" value="" />
+        <input type="hidden" name="selected-company" value="" />
+        <input type="hidden" name="compare-to" value="" />
+        <input type="hidden" name="page-url" value="" />
+        <input type="hidden" name="source" value="month" />
+        <p class="gate-honeypot" aria-hidden="true">
+          <label>Don’t fill this out if you’re human: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+        </p>
+        <h2 id="month-gate-title">See the full year against your peers</h2>
+        <p id="month-gate-copy">
+          This demo stays on February 2026. Solvenna keeps the rest of the monthly history for this benchmark and turns it into a clear plan: where you trail peers, which channels are not earning their spend, and where to invest next so you can win share.
+        </p>
+        <div class="gate-fields">
+          <label for="gate-contact">
+            Email or phone
+            <input
+              id="gate-contact"
+              name="contact"
+              type="text"
+              autocomplete="on"
+              spellcheck="false"
+              aria-required="true"
+              aria-describedby="month-gate-hint month-gate-error"
+            />
+          </label>
+        </div>
+        <p class="gate-hint" id="month-gate-hint">An email address or a phone number is enough.</p>
+        <p class="gate-error" id="month-gate-error" role="alert" hidden></p>
+        <div class="gate-actions">
+          <button type="submit" class="gate-primary">Get the full monthly analysis</button>
+          <button type="button" class="gate-close" id="month-gate-close">Not now</button>
+        </div>
+      </form>
+      <div id="month-gate-success" class="gate-success" hidden>
+        <h2 id="month-gate-success-title">Thanks, we have your note</h2>
+        <p id="month-gate-success-copy">
+          Solvenna will follow up with the full monthly history and a short read on what to fix first.
+        </p>
+        <p>
+          <a class="gate-contact" href="https://solvenna.com/contact/" target="_blank" rel="noopener noreferrer">Continue on the contact page</a>
+        </p>
+        <div class="gate-actions">
+          <button type="button" class="gate-close" id="month-gate-success-close">Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <div id="metric-tooltip" class="metric-tooltip" role="tooltip" hidden></div>
+  </body>
+</html>

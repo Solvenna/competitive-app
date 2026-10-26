@@ -12,10 +12,19 @@ import {
 } from "../lib/metrics.js";
 import { searchCompanies } from "../lib/search.js";
 import { setComparisonReader } from "./comparison-context.js";
-import { openMonthGate } from "./month-gate.js";
-import { createPriorityPlays } from "./priority-plays.js";
+import { openMonthGate, openReportGate } from "./month-gate.js";
+import { createPriorityPlays, unlockPriorityPlays } from "./priority-plays.js";
+import { isReportUnlocked, onReportUnlock } from "./report-lock.js";
 
 const LOCK_ICON = `<svg class="lock" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3.2" y="7" width="9.6" height="6.2" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.4 7V5.1a2.6 2.6 0 0 1 5.2 0V7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
+
+/** Table rows (group headers included) shown in the clear before the opt-in. */
+const PREVIEW_ROWS = 12;
+/** Blurred rows rendered after the preview; the rest of the table waits for the opt-in. */
+const TEASER_ROWS = 3;
+/** At a glance cards and bars per card shown in the clear before the opt-in. */
+const GLANCE_PREVIEW_CARDS = 2;
+const GLANCE_PREVIEW_BARS = 4;
 
 export function startApp(root) {
   const state = {
@@ -429,13 +438,15 @@ export function startApp(root) {
     return "";
   }
 
-  function comparisonTable(focal, compareIds, month) {
+  function comparisonTable(focal, compareIds, month, locked) {
     const focalName = companyName(focal.id);
     const columnCount = compareIds.length + 1;
-    const body = tableRows(state.model.metrics)
-      .map((row) => {
+    const rows = tableRows(state.model.metrics);
+    const body = (locked ? rows.slice(0, PREVIEW_ROWS + TEASER_ROWS) : rows)
+      .map((row, index) => {
+        const lockedRow = locked && index >= PREVIEW_ROWS;
         if (row.type === "group") {
-          return `<tr class="group"><th colspan="${columnCount}" scope="colgroup">${escapeHtml(row.label)}</th></tr>`;
+          return `<tr class="group${lockedRow ? " locked-row" : ""}"${lockedRow ? " inert" : ""}><th colspan="${columnCount}" scope="colgroup">${escapeHtml(row.label)}</th></tr>`;
         }
         const metric = row.metric;
         const label = displayLabel(metric);
@@ -450,7 +461,7 @@ export function startApp(root) {
             return `<td class="${classes.join(" ")}" data-company="${escapeHtml(id)}" data-metric="${escapeHtml(metric.id)}" data-kind="${cell.kind}"${cell.cmp ? ` data-cmp="${cell.cmp}"` : ""}>${phrase ? `<span class="vh">${escapeHtml(phrase)}</span>` : ""}${escapeHtml(cell.display)}</td>`;
           })
           .join("");
-        return `<tr>
+        return `<tr${lockedRow ? ` class="locked-row" inert` : ""}>
         <th scope="row" class="metric">
           <button type="button" class="metric-label" data-definition="${escapeHtml(definition)}" aria-label="${escapeHtml(label)}">${escapeHtml(label)}</button>
         </th>
@@ -459,7 +470,7 @@ export function startApp(root) {
       })
       .join("");
 
-    return `<div class="table-card">
+    return `<div class="table-card${locked ? " is-truncated" : ""}">
     <table id="comparison-table" style="--companies:${columnCount}">
       <colgroup>
         <col class="col-metric" />
@@ -479,7 +490,8 @@ export function startApp(root) {
   <p class="scroll-hint">Scroll sideways to see every competitor.</p>`;
   }
 
-  function spotlight(focal, compareIds, month) {
+  function spotlight(focal, compareIds, month, locked) {
+    let cardIndex = 0;
     const cards = SPOTLIGHT_METRIC_IDS.map((metricId) => {
       const metric = state.model.metrics.find((item) => item.id === metricId);
       if (!metric || metric.available_in_snapshot === false) return "";
@@ -489,14 +501,16 @@ export function startApp(root) {
       }));
       if (points[0].value == null) return "";
       const max = Math.max(...points.map((point) => (point.value != null && point.value > 0 ? point.value : 0)));
+      const lockedCard = locked && cardIndex++ >= GLANCE_PREVIEW_CARDS;
       const bars = points
-        .map((point) => {
+        .map((point, barIndex) => {
           const name = companyById(point.id)?.name || point.id;
           const cell = metricCell(state.model, metric, point.id, focal.id, month);
           const width =
             point.value == null || max <= 0 ? 0 : Math.min(100, Math.max(0, (point.value / max) * 100));
           const tone = point.id === focal.id ? "focal" : cell.cmp || "";
-          return `<li class="bar-row${point.id === focal.id ? " focal" : ""}">
+          const lockedBar = locked && !lockedCard && barIndex >= GLANCE_PREVIEW_BARS;
+          return `<li class="bar-row${point.id === focal.id ? " focal" : ""}${lockedBar ? " locked-item" : ""}"${lockedBar ? " inert" : ""}>
           <span class="bar-name" title="${escapeHtml(name)}">${escapeHtml(name)}</span>
           <span class="track"><span class="fill ${tone}" style="width:${width.toFixed(1)}%"></span></span>
           <span class="bar-val">${escapeHtml(cell.display)}</span>
@@ -504,7 +518,7 @@ export function startApp(root) {
         })
         .join("");
       const focalCell = metricCell(state.model, metric, focal.id, focal.id, month);
-      return `<article class="spot-card">
+      return `<article class="spot-card${lockedCard ? " locked-item" : ""}"${lockedCard ? " inert" : ""}>
       <div class="spot-top">
         <h3>${escapeHtml(displayLabel(metric))}</h3>
         <span class="spot-focal">${escapeHtml(focalCell.display)}</span>
@@ -523,6 +537,14 @@ export function startApp(root) {
   </section>`;
   }
 
+  function unlockCard(focal) {
+    return `<div class="unlock-card" role="region" aria-labelledby="unlock-title">
+      <h3 id="unlock-title">See the full benchmark for ${escapeHtml(focal.name)}</h3>
+      <p>Every metric, the at-a-glance charts, and all Priority Plays. Free with an email or phone number.</p>
+      <button type="button" class="gate-primary" data-unlock>${LOCK_ICON} Unlock the full report</button>
+    </div>`;
+  }
+
   function renderResults() {
     const results = document.querySelector("#results");
     const focal = state.companyId ? companyById(state.companyId) : null;
@@ -539,7 +561,8 @@ export function startApp(root) {
       </section>`;
       return;
     }
-    const glance = spotlight(focal, compareIds, month);
+    const locked = !isReportUnlocked();
+    const glance = spotlight(focal, compareIds, month, locked);
     const status = document.querySelector("#live-status");
     if (status) {
       const count = compareIds.length === 1 ? "1 competitor" : `${compareIds.length} competitors`;
@@ -554,8 +577,11 @@ export function startApp(root) {
           <li><span class="swatch worse" aria-hidden="true"></span> Worse than ${escapeHtml(focal.name)}</li>
         </ul>
       </div>
-      ${comparisonTable(focal, compareIds, month)}
-      ${glance ? `<div class="glance">${glance}</div>` : ""}
+      <div class="report-lock${locked ? " is-locked" : ""}">
+        ${comparisonTable(focal, compareIds, month, locked)}
+        ${glance ? `<div class="glance">${glance}</div>` : ""}
+        ${locked ? unlockCard(focal) : ""}
+      </div>
     </section>`;
   }
 
@@ -741,6 +767,15 @@ export function startApp(root) {
       <p>${escapeHtml(message)} Use <code>npm run dev</code> or <code>npm run preview</code> so <code>data/demo.json</code> can be fetched. Opening the HTML file directly will not load it.</p>
     </section>`;
   }
+
+  root.addEventListener("click", (event) => {
+    if (event.target.closest("[data-unlock]")) openReportGate();
+  });
+
+  onReportUnlock(() => {
+    renderResults();
+    unlockPriorityPlays();
+  });
 
   setComparisonReader(() => ({
     company: state.companyId ? `${companyName(state.companyId)} (${state.companyId})` : "",

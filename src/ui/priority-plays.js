@@ -1,5 +1,6 @@
 import { escapeHtml } from "../lib/html.js";
 import { buildAnalysisPacket } from "../lib/metrics.js";
+import { isReportUnlocked } from "./report-lock.js";
 
 export const TAGLINE_INTERVAL_MS = 4000;
 const MIN_VISIBLE_MS = 1200;
@@ -88,12 +89,41 @@ function stopTaglines() {
 
 let taglineTimer = null;
 
+/** Plays shown in the clear, after the bottom line, before the opt-in. */
+const PREVIEW_PLAYS = 2;
+
+/** Keeps the bottom line and first plays readable; the rest wait for the opt-in. */
+function lockPlays(body) {
+  const items = [...body.querySelectorAll(".opp-list li")].slice(PREVIEW_PLAYS);
+  if (!items.length) return;
+  for (const item of items) {
+    item.classList.add("locked-item");
+    item.inert = true;
+  }
+  const count = items.length === 1 ? "1 more play" : `${items.length} more plays`;
+  body.insertAdjacentHTML(
+    "beforeend",
+    `<p class="opp-more"><button type="button" class="opp-unlock" data-unlock>Unlock ${count} in the full report</button></p>`,
+  );
+}
+
+export function unlockPriorityPlays() {
+  const body = document.querySelector("#opportunities-body");
+  if (!body) return;
+  for (const item of body.querySelectorAll(".locked-item")) {
+    item.classList.remove("locked-item");
+    item.inert = false;
+  }
+  body.querySelector(".opp-more")?.remove();
+}
+
 function showPlays(html) {
   stopTaglines();
   const body = document.querySelector("#opportunities-body");
   if (!body) return;
   body.setAttribute("aria-busy", "false");
   body.innerHTML = html;
+  if (!isReportUnlocked()) lockPlays(body);
 }
 
 function showLoading() {
