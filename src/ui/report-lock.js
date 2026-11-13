@@ -1,10 +1,7 @@
 const STORAGE_KEY = "solvenna-report-unlocked";
 
-/** Only the /demo page gates the report; the main page always shows all of it. */
-const GATED = globalThis.document?.documentElement.dataset.page === "demo";
-
 const listeners = new Set();
-let unlocked = !GATED || readStored();
+let unlocked = readStored();
 
 function readStored() {
   try {

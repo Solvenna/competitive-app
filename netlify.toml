@@ -14,3 +14,14 @@
 
 [functions.analyze]
   timeout = 26
+
+# The old /demo page is now the main page.
+[[redirects]]
+  from = "/demo"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/demo/*"
+  to = "/"
+  status = 301

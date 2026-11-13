@@ -1,4 +1,3 @@
-import { resolve } from "node:path";
 import { defineConfig } from "vite";
 
 const ANALYZE_PATHS = new Set(["/api/analyze", "/.netlify/functions/analyze"]);
@@ -95,8 +94,7 @@ function localAnalyzeStub() {
   };
 }
 
-/** The main page and /demo post to separate Netlify forms. */
-const LEAD_FORM_NAMES = new Set(["benchmark-lead", "benchmark-demo-lead"]);
+const LEAD_FORM_NAMES = new Set(["benchmark-lead"]);
 
 /** Local stand-in for Netlify Forms. Production stores the post and emails the site owner. */
 function localLeadFormStub() {
@@ -142,23 +140,22 @@ function localLeadFormStub() {
 }
 
 /**
- * Sends /demo to /demo/ so the demo page loads instead of the main-page fallback.
- * Netlify serves demo/index.html at /demo on its own.
+ * The old /demo page is now the main page. Mirrors the netlify.toml redirect so old links land on /.
  */
-function demoTrailingSlash() {
+function demoRedirect() {
   function handle(req, res, next) {
     const [path, query] = (req.url || "").split("?");
-    if (path !== "/demo") {
+    if (path !== "/demo" && path !== "/demo/") {
       next();
       return;
     }
     res.statusCode = 301;
-    res.setHeader("Location", `/demo/${query ? `?${query}` : ""}`);
+    res.setHeader("Location", `/${query ? `?${query}` : ""}`);
     res.end();
   }
 
   return {
-    name: "demo-trailing-slash",
+    name: "demo-redirect",
     configureServer(server) {
       server.middlewares.use(handle);
     },
@@ -170,13 +167,5 @@ function demoTrailingSlash() {
 
 export default defineConfig({
   base: "./",
-  plugins: [demoTrailingSlash(), localAnalyzeStub(), localLeadFormStub()],
-  build: {
-    rollupOptions: {
-      input: {
-        main: resolve(import.meta.dirname, "index.html"),
-        demo: resolve(import.meta.dirname, "demo/index.html"),
-      },
-    },
-  },
+  plugins: [demoRedirect(), localAnalyzeStub(), localLeadFormStub()],
 });

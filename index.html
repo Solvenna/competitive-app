@@ -10,20 +10,6 @@
     <meta name="theme-color" content="#05283f" />
     <link rel="icon" type="image/png" href="./solvenna-logo.png" />
     <title>Solvenna Marketing Benchmark</title>
-    <script>
-      (function () {
-        var on = false;
-        try {
-          var stored = localStorage.getItem("quicklift-high-contrast");
-          if (stored === "on") on = true;
-          else if (stored === "off") on = false;
-          else on = window.matchMedia("(prefers-contrast: more)").matches;
-        } catch (e) {
-          on = false;
-        }
-        document.documentElement.setAttribute("data-contrast", on ? "high" : "standard");
-      })();
-    </script>
     <script type="module" src="/src/main.js"></script>
   </head>
   <body>
@@ -31,24 +17,28 @@
       <header class="site-header">
         <div class="header-top">
           <img class="logo" src="./solvenna-logo.png" alt="Solvenna" width="220" height="48" />
-          <button type="button" id="contrast-toggle" class="contrast-toggle" aria-pressed="false">
-            <span class="contrast-label">High contrast</span>
-            <span class="contrast-state">Off</span>
-          </button>
         </div>
-        <script>
-          (function () {
-            var on = document.documentElement.getAttribute("data-contrast") === "high";
-            var button = document.getElementById("contrast-toggle");
-            button.setAttribute("aria-pressed", on ? "true" : "false");
-            button.querySelector(".contrast-state").textContent = on ? "On" : "Off";
-          })();
-        </script>
-        <h1>Marketing benchmark</h1>
-        <p class="lede">
-          A sample of February 2026 competitive metrics. Set the company,
-          competitors, and month in the panel below.
-        </p>
+        <div class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Competitive marketing benchmark</p>
+            <h1>See exactly where your competitors are beating you</h1>
+            <p class="lede">
+              Compare traffic, search, social, and paid performance side by side,
+              then get Priority Plays that show where to invest next. Pick your
+              company and competitors below to start.
+            </p>
+            <ul class="hero-points">
+              <li>Side-by-side competitor metrics</li>
+              <li>Channel spend efficiency</li>
+              <li>Prioritized next steps</li>
+            </ul>
+          </div>
+          <div class="hero-actions">
+            <button type="button" id="header-cta" class="gate-primary hero-cta">Get the full report</button>
+            <a class="hero-secondary" href="#setup">Try the free sample ↓</a>
+            <p class="hero-note">Sample data from February 2026</p>
+          </div>
+        </div>
       </header>
 
       <main id="app" class="app">
@@ -76,6 +66,7 @@
       <input type="text" name="selected-company" />
       <input type="text" name="compare-to" />
       <input type="text" name="page-url" />
+      <input type="text" name="source" />
       <input type="text" name="bot-field" />
     </form>
     <dialog id="month-gate" class="gate" aria-labelledby="month-gate-title">
@@ -85,6 +76,7 @@
         <input type="hidden" name="selected-company" value="" />
         <input type="hidden" name="compare-to" value="" />
         <input type="hidden" name="page-url" value="" />
+        <input type="hidden" name="source" value="month" />
         <p class="gate-honeypot" aria-hidden="true">
           <label>Don’t fill this out if you’re human: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
         </p>
@@ -115,7 +107,7 @@
       </form>
       <div id="month-gate-success" class="gate-success" hidden>
         <h2 id="month-gate-success-title">Thanks, we have your note</h2>
-        <p>
+        <p id="month-gate-success-copy">
           Solvenna will follow up with the full monthly history and a short read on what to fix first.
         </p>
         <p>
