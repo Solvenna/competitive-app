@@ -1,3 +1,5 @@
+import { track } from "../lib/analytics.js";
+
 const STORAGE_KEY = "solvenna-report-unlocked";
 
 const listeners = new Set();
@@ -24,6 +26,7 @@ export function unlockReport() {
   } catch {
     // Private windows can block storage; the report still unlocks for this visit.
   }
+  track("report_unlock");
   for (const listener of listeners) listener();
 }
 
