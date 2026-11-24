@@ -1,3 +1,4 @@
+import { track } from "../lib/analytics.js";
 import { classifyContact, contactErrorMessage } from "../lib/contact.js";
 import { readComparisonContext } from "./comparison-context.js";
 import { isReportUnlocked, onReportUnlock, unlockReport } from "./report-lock.js";
@@ -27,9 +28,11 @@ const VARIANTS = {
 };
 
 let variant = VARIANTS.month;
+let variantName = "month";
 
 function applyVariant(name) {
   variant = VARIANTS[name] || VARIANTS.month;
+  variantName = name in VARIANTS ? name : "month";
   const set = (selector, text) => {
     const node = document.querySelector(selector);
     if (node) node.textContent = text;
@@ -134,6 +137,7 @@ async function submitGate(event) {
       body: new URLSearchParams(new FormData(form)).toString(),
     });
     if (!response.ok) throw new Error(String(response.status));
+    track("generate_lead", { form_name: "benchmark-lead", gate_variant: variantName, contact_method: kind });
     showSuccess();
     unlockReport();
   } catch {
@@ -151,6 +155,7 @@ function openGate(name) {
   if (!dialog || dialog.open) return;
   applyVariant(name);
   dialog.showModal();
+  track("gate_open", { gate_variant: variantName });
 }
 
 export function openMonthGate() {
@@ -168,7 +173,10 @@ export function initMonthGate() {
   dialog.dataset.bound = "1";
   form.addEventListener("submit", submitGate);
   dialog.addEventListener("close", resetGate);
-  document.querySelector("#month-gate-close")?.addEventListener("click", () => dialog.close());
+  document.querySelector("#month-gate-close")?.addEventListener("click", () => {
+    track("gate_dismiss", { gate_variant: variantName });
+    dialog.close();
+  });
   document.querySelector("#month-gate-success-close")?.addEventListener("click", () => dialog.close());
 
   const headerCta = document.querySelector("#header-cta");
